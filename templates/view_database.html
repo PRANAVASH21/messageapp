@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}View Database - Messaging App{% endblock %}
+
+{% block content %}
+    <h1>Database Contents</h1>
+    <a href="{{ url_for('admin_login') }}" class="button">Back</a>
+
+    <!-- Search Form -->
+    <form id="search-form" action="/view_database" method="GET">
+        <input type="text" name="query" placeholder="Search by ID, Name, or Username" value="{{ request.args.get('query', '') }}">
+        <button type="submit" class="button">Search</button>
+    </form>
+
+    <!-- Form to handle deletion -->
+    <form id="delete-form" action="/delete_user" method="POST">
+        <table>
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Password</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td><input type="radio" name="user_id" value="{{ user['id'] }}"></td>
+                    <td>{{ user['id'] }}</td>
+                    <td>{{ user['name'] }}</td>
+                    <td>{{ user['username'] }}</td>
+                    <td>{{ user['password'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="button" onclick="return confirmDelete()">Delete Selected</button>
+    </form>
+
+    <!-- Form to handle new user addition -->
+    <h2>Add New User</h2>
+    <form action="/add_user" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        
+        <button type="submit" class="button">Add User</button>
+    </form>
+
+    <!-- Display Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+{% endblock %}
+
+<script>
+    function confirmDelete() {
+        return confirm('Are you sure you want to delete the selected user?');
+    }
+</script>
