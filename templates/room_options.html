@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Options</title>
+</head>
+<body>
+    <h1>Welcome, {{ session['username'] }}</h1>
+    
+    <!-- Display Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    
+    <a href="{{ url_for('room_input') }}" class="button">Join Room</a>
+    <a href="{{ url_for('create_room') }}" class="button">Create Room</a>
+    <a href="{{ url_for('index') }}" class="button">Back</a>
+</body>
+</html>

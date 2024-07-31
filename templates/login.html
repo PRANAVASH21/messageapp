@@ -3,7 +3,6 @@
 {% block title %}Login - Messaging App{% endblock %}
 
 {% block content %}
-    <a href="{{ url_for('admin_login') }}" class="button">Admin Login</a>
     <h1>Login</h1>
     
     <!-- Display Flash Messages -->
@@ -24,7 +23,17 @@
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
         
-        <button type="submit" class="button">Submit</button>
+        <button type="submit" class="button">Login</button>
     </form>
-    <a href="{{ url_for('index') }}" class="button">Back</a>
+
+    <!-- Admin Login Link -->
+    <a href="{{ url_for('admin_login') }}" class="button">Admin Login</a>
+    
+    <button class="button" onclick="goBack()">Back</button>
 {% endblock %}
+
+<script>
+    function goBack() {
+        window.history.back();
+    }
+</script>

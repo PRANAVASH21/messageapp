@@ -31,5 +31,11 @@
         
         <button type="submit" class="button">Submit</button>
     </form>
-    <a href="{{ url_for('login') }}" class="button">Back</a>
+    <button class="button" onclick="goBack()">Back</button>
 {% endblock %}
+
+<script>
+    function goBack() {
+        window.history.back();
+    }
+</script>

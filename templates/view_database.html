@@ -4,16 +4,10 @@
 
 {% block content %}
     <h1>Database Contents</h1>
-    <a href="{{ url_for('admin_login') }}" class="button">Back</a>
-
-    <!-- Search Form -->
-    <form id="search-form" action="/view_database" method="GET">
-        <input type="text" name="query" placeholder="Search by ID, Name, or Username" value="{{ request.args.get('query', '') }}">
-        <button type="submit" class="button">Search</button>
-    </form>
-
-    <!-- Form to handle deletion -->
-    <form id="delete-form" action="/delete_user" method="POST">
+    <a href="{{ url_for('logout') }}" class="button">Logout</a>
+    
+    <!-- Form to handle user deletion -->
+    <form id="delete-form" action="{{ url_for('view_database') }}" method="POST">
         <table>
             <thead>
                 <tr>
@@ -21,7 +15,6 @@
                     <th>ID</th>
                     <th>Name</th>
                     <th>Username</th>
-                    <th>Password</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,17 +24,16 @@
                     <td>{{ user['id'] }}</td>
                     <td>{{ user['name'] }}</td>
                     <td>{{ user['username'] }}</td>
-                    <td>{{ user['password'] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-        <button type="submit" class="button" onclick="return confirmDelete()">Delete Selected</button>
+        <button type="submit" name="delete_user" class="button" onclick="return confirmDelete()">Delete Selected</button>
     </form>
 
     <!-- Form to handle new user addition -->
     <h2>Add New User</h2>
-    <form action="/add_user" method="POST">
+    <form action="{{ url_for('view_database') }}" method="POST">
         <label for="name">Name:</label>
         <input type="text" id="name" name="name" required>
         
@@ -51,7 +43,7 @@
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required>
         
-        <button type="submit" class="button">Add User</button>
+        <button type="submit" name="add_user" class="button">Add User</button>
     </form>
 
     <!-- Display Flash Messages -->

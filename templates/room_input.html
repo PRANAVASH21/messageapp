@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Room</title>
+</head>
+<body>
+    <h1>Join Room</h1>
+    <form action="{{ url_for('room_input') }}" method="POST">
+        <label for="room_id">Room ID:</label>
+        <input type="text" id="room_id" name="room_id" required>
+        
+        <label for="username">Your Username:</label>
+        <input type="text" id="username" name="username" required>
+        
+        <button type="submit" class="button">Join</button>
+    </form>
+    <button class="button" onclick="goBack()">Back</button>
+</body>
+</html>
