@@ -141,7 +141,7 @@ def add_user():
 
 @app.route('/room_options')
 def room_options():
-    if 'username' not in session:
+    if 'username' not in session and 'admin_logged_in' not in session:
         flash("You need to log in first.", "error")
         return redirect(url_for('login'))
     return render_template('room_options.html')
@@ -149,30 +149,29 @@ def room_options():
 @app.route('/room_input', methods=['POST'])
 def room_input():
     action = request.form.get('action')
-    room_id = request.form.get('room_id') or str(uuid.uuid4())
+    room_id = request.form.get('room_id')
     room_name = request.form.get('room_name')
 
     if action == 'join':
         if not room_id:
             flash("Room ID is required.", "error")
-            return redirect(url_for('room_options'))
-        
+            return render_template('room_options.html')
         session['room_id'] = room_id
-        flash(f"Joining Room ID: {room_id}", "success")
         return redirect(url_for('room', room_id=room_id))
     
     elif action == 'create':
         if not room_name:
-            flash("Room name is required.", "error")
-            return redirect(url_for('room_options'))
-
+            flash("Room Name is required.", "error")
+            return render_template('room_options.html')
+        
+        room_id = str(uuid.uuid4())  # Generate a unique room ID
         session['room_id'] = room_id
         session['room_name'] = room_name
         flash(f"Room created successfully! Room ID: {room_id}", "success")
         return redirect(url_for('room', room_id=room_id))
-
+    
     flash("Invalid action.", "error")
-    return redirect(url_for('room_options'))
+    return render_template('room_options.html')
 
 @app.route('/room/<room_id>')
 def room(room_id):
@@ -217,15 +216,16 @@ def signup():
 def handle_message(data):
     room_id = data.get('room_id')
     message = data.get('message')
+    username = session.get('username', 'Unknown User')  # Ensure the username is retrieved from session
     if room_id:
-        emit('message', {'username': session.get('username'), 'message': message}, room=room_id)
+        emit('message', {'username': username, 'message': message}, room=room_id)
 
 @socketio.on('join')
 def on_join(data):
     room_id = data.get('room_id')
     if room_id:
         join_room(room_id)
-        username = session.get('username', 'Unknown User')
+        username = session.get('username', 'Unknown User')  # Retrieve the username from the session
         emit('status', {'username': username, 'message': 'has joined the room.'}, room=room_id)
 
 @socketio.on('leave')
@@ -233,7 +233,7 @@ def on_leave(data):
     room_id = data.get('room_id')
     if room_id:
         leave_room(room_id)
-        username = session.get('username', 'Unknown User')
+        username = session.get('username', 'Unknown User')  # Retrieve the username from the session
         emit('status', {'username': username, 'message': 'has left the room.'}, room=room_id)
 
 if __name__ == '__main__':

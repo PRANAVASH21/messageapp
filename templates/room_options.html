@@ -24,17 +24,19 @@
         <!-- Form to join a room -->
         <h2>Join a Room</h2>
         <form action="{{ url_for('room_input') }}" method="POST">
+            <input type="hidden" name="action" value="join"> <!-- Hidden field for action -->
             <label for="room_id">Room ID:</label>
             <input type="text" id="room_id" name="room_id" required>
-            <button type="submit" name="action" value="join" class="button">Join Room</button>
+            <button type="submit" class="button">Join Room</button>
         </form>
 
         <!-- Option to create a new room -->
         <h2>Create a New Room</h2>
         <form action="{{ url_for('room_input') }}" method="POST">
+            <input type="hidden" name="action" value="create"> <!-- Hidden field for action -->
             <label for="room_name">Room Name:</label>
             <input type="text" id="room_name" name="room_name" required>
-            <button type="submit" name="action" value="create" class="button">Create Room</button>
+            <button type="submit" class="button">Create Room</button>
         </form>
         
         <a href="{{ url_for('index') }}" class="button">Back</a>
