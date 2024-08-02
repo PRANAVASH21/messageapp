@@ -29,22 +29,27 @@
             </tbody>
         </table>
         <button type="submit" name="delete_user" class="button" onclick="return confirmDelete()">Delete Selected</button>
+        <script>
+            function confirmDelete() {
+                return confirm('Are you sure you want to delete the selected user?');
+            }
+        </script>
     </form>
 
     <!-- Form to handle new user addition -->
-    <h2>Add New User</h2>
-    <form action="{{ url_for('view_database') }}" method="POST">
-        <label for="name">Name:</label>
-        <input type="text" id="name" name="name" required>
-        
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required>
-        
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
-        
-        <button type="submit" name="add_user" class="button">Add User</button>
-    </form>
+<h2>Add New User</h2>
+<form action="{{ url_for('add_user') }}" method="POST"> <!-- Update URL to 'add_user' -->
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required>
+    
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    
+    <button type="submit" class="button">Add User</button>
+</form>
 
     <!-- Display Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=True) %}
@@ -58,8 +63,3 @@
     {% endwith %}
 {% endblock %}
 
-<script>
-    function confirmDelete() {
-        return confirm('Are you sure you want to delete the selected user?');
-    }
-</script>

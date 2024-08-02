@@ -3,24 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room Options</title>
+    <title>Room Options - Messaging App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Welcome, {{ session['username'] }}</h1>
-    
-    <!-- Display Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=True) %}
-        {% if messages %}
-            <ul class="flash-messages">
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
-    
-    <a href="{{ url_for('room_input') }}" class="button">Join Room</a>
-    <a href="{{ url_for('create_room') }}" class="button">Create Room</a>
-    <a href="{{ url_for('index') }}" class="button">Back</a>
+    <div class="container">
+        <h1>Welcome, {{ session['username'] }}</h1>
+        
+        <!-- Display Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Form to join a room -->
+        <h2>Join a Room</h2>
+        <form action="{{ url_for('room_input') }}" method="POST">
+            <label for="room_id">Room ID:</label>
+            <input type="text" id="room_id" name="room_id" required>
+            <button type="submit" name="action" value="join" class="button">Join Room</button>
+        </form>
+
+        <!-- Option to create a new room -->
+        <h2>Create a New Room</h2>
+        <form action="{{ url_for('room_input') }}" method="POST">
+            <label for="room_name">Room Name:</label>
+            <input type="text" id="room_name" name="room_name" required>
+            <button type="submit" name="action" value="create" class="button">Create Room</button>
+        </form>
+        
+        <a href="{{ url_for('index') }}" class="button">Back</a>
+    </div>
 </body>
 </html>

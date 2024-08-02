@@ -7,19 +7,23 @@
 </head>
 <body>
     <h1>Create Room</h1>
+
+    <!-- Display Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
     <form action="{{ url_for('create_room') }}" method="POST">
-        <label for="username">Your Username:</label>
+        <label for="username">Username:</label>
         <input type="text" id="username" name="username" required>
         
         <button type="submit" class="button">Create Room</button>
     </form>
-    <button class="button" onclick="goBack()">Back</button>
-
-    <!-- Display Join Room button if room ID is available -->
-    {% if session.get('room_id') %}
-    <h2>Room Created Successfully!</h2>
-    <p>Your Room ID: {{ session['room_id'] }}</p>
-    <a href="{{ url_for('room', room_id=session['room_id']) }}" class="button">Join Room</a>
-    {% endif %}
 </body>
 </html>

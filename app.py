@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_socketio import SocketIO, emit, join_room, leave_room
 import sqlite3
 import os
 import uuid
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Required for flash messages and session management
+socketio = SocketIO(app)
 
 DATABASE = os.path.join(os.path.dirname(__file__), 'instance', 'database.db')
 CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), 'admin_credentials.txt')
@@ -50,29 +52,21 @@ def index():
 def login():
     if request.method == 'POST':
         username = request.form['username']
-        password = request.form['password']
-
-        if not os.path.exists(DATABASE):
-            flash("Database does not exist. Please contact the administrator.", "error")
-            return render_template('login.html')
-
-        conn = get_db()
-        user = conn.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
-        conn.close()
-        
-        if user:
-            if user['password'] == password:
-                flash("Login successful!", "success")
-                session['username'] = username  # Store username in session
-                return redirect(url_for('room_options'))
-            else:
-                flash("Invalid credentials.", "error")
-        else:
-            flash("User not found or incorrect credentials.", "error")
-        
-        return render_template('login.html')
+        if username:
+            session['username'] = username
+            return redirect(url_for('room_options'))
+        flash("Username is required.", "error")
     
     return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)  # Clear the username from session
+    session.pop('room_id', None)  # Clear the room ID from session
+    session.pop('room_name', None)  # Clear the room name from session
+    session.pop('admin_logged_in', None)  # Clear admin login status from session
+    flash("You have been logged out.", "success")
+    return redirect(url_for('index'))
 
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
@@ -90,7 +84,6 @@ def admin_login():
             flash("Invalid admin credentials.", "error")
     
     return render_template('admin_login.html')
-
 
 @app.route('/view_database', methods=['GET', 'POST'])
 def view_database():
@@ -125,9 +118,9 @@ def add_user():
         flash("You need to log in as an admin first.", "error")
         return redirect(url_for('admin_login'))
 
-    name = request.form['name']
-    username = request.form['username']
-    password = request.form['password']
+    name = request.form.get('name')
+    username = request.form.get('username')
+    password = request.form.get('password')
 
     if not (name and username and password):
         flash("All fields are required.", "error")
@@ -138,58 +131,53 @@ def add_user():
         conn.execute('INSERT INTO users (name, username, password) VALUES (?, ?, ?)',
                      (name, username, password))
         conn.commit()
-        conn.close()
         flash("User added successfully!", "success")
     except sqlite3.IntegrityError:
         flash("Username already exists.", "error")
+    finally:
+        conn.close()
 
     return redirect(url_for('view_database'))
 
 @app.route('/room_options')
 def room_options():
-    if 'username' not in session and 'admin_logged_in' not in session:
+    if 'username' not in session:
         flash("You need to log in first.", "error")
         return redirect(url_for('login'))
     return render_template('room_options.html')
 
-@app.route('/room_input', methods=['GET', 'POST'])
+@app.route('/room_input', methods=['POST'])
 def room_input():
-    if request.method == 'POST':
-        room_id = request.form['room_id']
-        username = request.form['username']
+    action = request.form.get('action')
+    room_id = request.form.get('room_id') or str(uuid.uuid4())
+    room_name = request.form.get('room_name')
+
+    if action == 'join':
         if not room_id:
             flash("Room ID is required.", "error")
-            return render_template('room_input.html')
+            return redirect(url_for('room_options'))
         
-        # Store the room ID and username in session or process them as needed
         session['room_id'] = room_id
-        session['room_username'] = username
-        
-        # Normally, you would validate the room ID here
+        flash(f"Joining Room ID: {room_id}", "success")
         return redirect(url_for('room', room_id=room_id))
     
-    return render_template('room_input.html')
+    elif action == 'create':
+        if not room_name:
+            flash("Room name is required.", "error")
+            return redirect(url_for('room_options'))
 
-@app.route('/create_room', methods=['GET', 'POST'])
-def create_room():
-    if request.method == 'POST':
-        room_id = str(uuid.uuid4())  # Generate a unique room ID
-        username = request.form['username']
-        
-        # Store the room ID and username in session or process them as needed
         session['room_id'] = room_id
-        session['room_username'] = username
-        
+        session['room_name'] = room_name
         flash(f"Room created successfully! Room ID: {room_id}", "success")
         return redirect(url_for('room', room_id=room_id))
-    
-    return render_template('create_room.html')
 
-@app.route('/room', methods=['GET'])
-def room():
-    room_id = request.args.get('room_id', None)
-    if not room_id:
-        flash("No room ID provided.", "error")
+    flash("Invalid action.", "error")
+    return redirect(url_for('room_options'))
+
+@app.route('/room/<room_id>')
+def room(room_id):
+    if 'username' not in session:
+        flash("You need to log in first.", "error")
         return redirect(url_for('index'))
     return render_template('room.html', room_id=room_id)
 
@@ -224,15 +212,30 @@ def signup():
     
     return render_template('signup.html')
 
-@app.route('/logout')
-def logout():
-    session.pop('username', None)  # Clear the username from session
-    session.pop('room_id', None)  # Clear the room ID from session
-    session.pop('room_username', None)  # Clear the room username from session
-    session.pop('admin_logged_in', None)  # Clear admin login status from session
-    flash("You have been logged out.", "success")
-    return redirect(url_for('index'))
+# WebSocket Events
+@socketio.on('message')
+def handle_message(data):
+    room_id = data.get('room_id')
+    message = data.get('message')
+    if room_id:
+        emit('message', {'username': session.get('username'), 'message': message}, room=room_id)
+
+@socketio.on('join')
+def on_join(data):
+    room_id = data.get('room_id')
+    if room_id:
+        join_room(room_id)
+        username = session.get('username', 'Unknown User')
+        emit('status', {'username': username, 'message': 'has joined the room.'}, room=room_id)
+
+@socketio.on('leave')
+def on_leave(data):
+    room_id = data.get('room_id')
+    if room_id:
+        leave_room(room_id)
+        username = session.get('username', 'Unknown User')
+        emit('status', {'username': username, 'message': 'has left the room.'}, room=room_id)
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    socketio.run(app, debug=True)

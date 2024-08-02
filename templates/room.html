@@ -3,17 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room</title>
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
 </head>
 <body>
-    <h1>Room</h1>
-    <p>Room ID: {{ room_id }}</p>
-    
-    <!-- Display Join Room button -->
-    <form action="{{ url_for('join_room', room_id=room_id) }}" method="POST">
-        <button type="submit" class="button">Join Room</button>
-    </form>
-    
-    <button class="button" onclick="goBack()">Back</button>
+    <div class="container">
+        <h1>Room ID: {{ room_id }}</h1>
+        <div id="chat" style="border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll;">
+            <!-- Messages will be displayed here -->
+        </div>
+        <input type="text" id="messageInput" placeholder="Type your message here..." style="width: 80%;">
+        <button id="sendMessage">Send</button>
+        <button id="leaveRoom">Leave Room</button>
+        <button id="backButton" onclick="goBack()">Back</button>
+    </div>
+    <script>
+        const socket = io();
+
+        // Join the room when the page loads
+        socket.emit('join', { room_id: "{{ room_id }}" });
+
+        // Handle incoming messages
+        socket.on('message', (data) => {
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<p><strong>${data.username}:</strong> ${data.message}</p>`;
+            chat.scrollTop = chat.scrollHeight;  // Auto-scroll to bottom
+        });
+
+        // Handle status updates
+        socket.on('status', (data) => {
+            const chat = document.getElementById('chat');
+            chat.innerHTML += `<p><em>${data.username} ${data.message}</em></p>`;
+            chat.scrollTop = chat.scrollHeight;  // Auto-scroll to bottom
+        });
+
+        // Send a message
+        document.getElementById('sendMessage').onclick = () => {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value;
+            if (message.trim() !== '') {
+                socket.emit('message', { room_id: "{{ room_id }}", message: message });
+                messageInput.value = '';  // Clear input
+            }
+        };
+
+        // Leave the room
+        document.getElementById('leaveRoom').onclick = () => {
+            socket.emit('leave', { room_id: "{{ room_id }}" });
+            window.location.href = "{{ url_for('room_options') }}";  // Redirect to room options
+        };
+
+        // Back button functionality
+        function goBack() {
+            window.history.back();
+        }
+    </script>
 </body>
 </html>
